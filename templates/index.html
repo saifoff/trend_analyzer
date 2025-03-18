@@ -11,11 +11,11 @@
         #chatSidebar {
             position: fixed;
             top: 0;
-            right: -400px; /* Start hidden from right side */
+            right: -400px;
             width: 400px;
             height: 100vh;
             background: white;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1); /* Shadow on left side */
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
             transition: right 0.3s ease;
             z-index: 1000;
         }
@@ -41,9 +41,23 @@
         /* Theme Toggle Button */
         #themeToggleBtn {
             position: fixed;
-            right: 20px;
-            top: 80px;
+            right: 160px; /* Increased distance from chat button */
+            top: 20px;
             z-index: 1001;
+            transition: all 0.3s ease;
+        }
+
+        /* Theme button position when chat is open */
+        #themeToggleBtn.chat-open {
+            right: auto;
+            left: 20px;
+        }
+        
+        /* Ensure buttons don't overlap on smaller screens */
+        @media (max-width: 640px) {
+            #themeToggleBtn {
+                right: 140px;
+            }
         }
 
         /* Dark Mode Styles */
@@ -260,13 +274,16 @@
         function toggleChat() {
             const sidebar = document.getElementById('chatSidebar');
             const toggleBtn = document.getElementById('chatToggleBtn');
+            const themeBtn = document.getElementById('themeToggleBtn');
             
             if (sidebar.classList.contains('open')) {
                 sidebar.classList.remove('open');
-                toggleBtn.classList.remove('hidden'); // Show button when chat is closed
+                toggleBtn.classList.remove('hidden');
+                themeBtn.classList.remove('chat-open'); // Move theme button back
             } else {
                 sidebar.classList.add('open');
-                toggleBtn.classList.add('hidden'); // Hide button when chat is open
+                toggleBtn.classList.add('hidden');
+                themeBtn.classList.add('chat-open'); // Move theme button to left
             }
         }
 

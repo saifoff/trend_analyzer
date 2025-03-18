@@ -79,12 +79,14 @@ def get_trending_videos(region_code='US'):
             print("Error: YouTube API key is not set")
             return []
         
+        print("Step 1: Fetching video IDs...")
         # First get popular videos from the region with multiple pages
         video_ids = []
         next_page_token = None
         
         # Fetch multiple pages to get more videos
-        for _ in range(3):  # Fetch 3 pages of results
+        for page in range(3):  # Fetch 3 pages of results
+            print(f"Fetching page {page + 1} of video IDs...")
             request = youtube.search().list(
                 part='id',
                 type='video',
@@ -97,24 +99,30 @@ def get_trending_videos(region_code='US'):
             search_response = request.execute()
             
             # Collect video IDs
-            video_ids.extend([item['id']['videoId'] for item in search_response.get('items', [])])
+            new_ids = [item['id']['videoId'] for item in search_response.get('items', [])]
+            video_ids.extend(new_ids)
+            print(f"Found {len(new_ids)} video IDs on page {page + 1}")
             
             # Get next page token
             next_page_token = search_response.get('nextPageToken')
             if not next_page_token:
                 break
         
+        print(f"Total video IDs collected: {len(video_ids)}")
+        
         if not video_ids:
             print("No videos found in the region")
             return []
         
+        print("Step 2: Fetching video details...")
         # Process videos in batches of 50 (API limit)
         all_videos = []
         for i in range(0, len(video_ids), 50):
             batch_ids = video_ids[i:i + 50]
+            print(f"Processing batch of {len(batch_ids)} videos...")
             
             videos_request = youtube.videos().list(
-                part='snippet,statistics,contentDetails',  # Added contentDetails to get duration
+                part='snippet,statistics,contentDetails',
                 id=','.join(batch_ids)
             )
             videos_response = videos_request.execute()
@@ -124,8 +132,10 @@ def get_trending_videos(region_code='US'):
                     view_count = int(item['statistics'].get('viewCount', 0))
                     duration_seconds = parse_duration(item['contentDetails']['duration'])
                     
+                    print(f"Video {item['id']}: Views={view_count}, Duration={duration_seconds}s")
+                    
                     # Only include videos with significant views and longer than 5 minutes
-                    if view_count > 10000 and duration_seconds >= 300:  # 300 seconds = 5 minutes
+                    if view_count > 10000 and duration_seconds >= 300:
                         video = {
                             'title': item['snippet']['title'],
                             'description': item['snippet']['description'],
@@ -137,10 +147,13 @@ def get_trending_videos(region_code='US'):
                             'country': region_code,
                             'published_at': item['snippet']['publishedAt'],
                             'duration': duration_seconds,
-                            'duration_formatted': str(timedelta(seconds=duration_seconds)).split('.')[0],  # Remove microseconds
+                            'duration_formatted': str(timedelta(seconds=duration_seconds)).split('.')[0],
                             'engagement_score': calculate_engagement_score(item)
                         }
                         all_videos.append(video)
+                        print(f"Added video: {item['snippet']['title']}")
+                    else:
+                        print(f"Filtered out video: Views={view_count}, Duration={duration_seconds}s")
                 except (KeyError, ValueError) as e:
                     print(f"Error processing video {item.get('id')}: {str(e)}")
                     continue
@@ -149,10 +162,12 @@ def get_trending_videos(region_code='US'):
         all_videos.sort(key=lambda x: x['engagement_score'], reverse=True)
         videos = all_videos[:10]  # Keep top 10
         
-        print(f"Processed {len(videos)} videos successfully")
+        print(f"Final result: {len(videos)} videos processed successfully")
         return videos
     except Exception as e:
         print(f"Error fetching trending videos: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         return []
 
 def get_content_suggestions(video_title, video_description, country_code):
