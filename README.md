@@ -153,7 +153,3 @@ This Flask application fetches trending YouTube videos and uses Google's Gemini 
 3. Commit changes
 4. Push to the branch
 5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details. 
