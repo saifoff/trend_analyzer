@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Trending Videos & Content Suggestions</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* Chat Sidebar Styles */
+        #chatSidebar {
+            position: fixed;
+            top: 0;
+            right: -400px; /* Start hidden from right side */
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1); /* Shadow on left side */
+            transition: right 0.3s ease;
+            z-index: 1000;
+        }
+
+        #chatSidebar.open {
+            right: 0;
+        }
+
+        /* Chat Toggle Button */
+        #chatToggleBtn {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            z-index: 1001;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #chatToggleBtn.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Chat Toggle Button -->
+    <button id="chatToggleBtn" 
+            onclick="toggleChat()" 
+            class="bg-green-500 text-white px-6 py-3 rounded-full shadow-lg hover:bg-green-600 transition duration-300 flex items-center gap-2">
+        <span id="chatToggleText">Chat</span>
+        <span id="chatToggleIcon">💬</span>
+    </button>
+
+    <!-- Chat Sidebar -->
+    <div id="chatSidebar">
+        <div class="h-full flex flex-col">
+            <div class="p-4 bg-green-500 text-white flex justify-between items-center">
+                <h2 class="text-xl font-semibold">Chat about {{ selected_country }} Trends</h2>
+                <button onclick="toggleChat()" class="text-white hover:text-gray-200">
+                    ❌
+                </button>
+            </div>
+            <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Messages will be added here -->
+            </div>
+            <div class="p-4 border-t bg-white">
+                <form id="chatForm" class="flex gap-2">
+                    <input type="text" 
+                           id="chatInput" 
+                           class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                           placeholder="Ask about trends in {{ selected_country }}...">
+                    <button type="submit" 
+                            class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition duration-300">
+                        Send
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8 text-gray-800">YouTube Trending Videos</h1>
+        
+        <!-- Country Selector -->
+        <div class="max-w-md mx-auto mb-8">
+            <form id="countryForm" class="flex items-center gap-4 bg-white p-4 rounded-lg shadow-lg">
+                <label for="country" class="text-gray-700 font-semibold">Select Country:</label>
+                <select id="country" name="country" class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="this.form.submit()">
+                    {% for country, code in countries.items() %}
+                    <option value="{{ code }}" {% if code == selected_country %}selected{% endif %}>
+                        {{ country }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
+        {% if videos %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for video in videos %}
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <img src="{{ video.thumbnail }}" alt="{{ video.title }}" class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h2 class="text-xl font-semibold mb-2 text-gray-800">
+                        <a href="https://www.youtube.com/watch?v={{ video.video_id }}" 
+                           target="_blank" 
+                           class="hover:text-blue-600 transition duration-300">
+                            {{ video.title }}
+                        </a>
+                    </h2>
+                    <div class="flex flex-wrap gap-2 text-sm mb-4">
+                        <p class="text-gray-600">
+                            <span class="font-semibold">⏱️ Duration:</span> 
+                            {{ video.duration_formatted }}
+                        </p>
+                        <p class="text-gray-600">
+                            <span class="font-semibold">👁️ Views:</span> 
+                            {{ '{:,}'.format(video.views|int) }}
+                        </p>
+                        <p class="text-gray-600">
+                            <span class="font-semibold">👍 Likes:</span> 
+                            {{ '{:,}'.format(video.likes|int) }}
+                        </p>
+                        <p class="text-gray-600">
+                            <span class="font-semibold">💬 Comments:</span> 
+                            {{ '{:,}'.format(video.comments|int) }}
+                        </p>
+                        <p class="text-gray-500">
+                            <span class="font-semibold">📅 Published:</span> 
+                            {{ video.published_at.split('T')[0] }}
+                        </p>
+                    </div>
+                    <button onclick="getSuggestions('{{ video.video_id }}', '{{ video.country }}')" 
+                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300">
+                        Get Content Suggestions
+                    </button>
+                </div>
+                <div id="suggestions-{{ video.video_id }}" class="hidden p-4 bg-gray-50 border-t">
+                    <h3 class="text-lg font-semibold mb-2 text-gray-800">Content Suggestions</h3>
+                    <div class="suggestions-content text-gray-600"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center p-8 bg-white rounded-lg shadow-lg">
+            <p class="text-xl text-red-500 mb-4">No videos available</p>
+            <p class="text-gray-600">This could be due to:</p>
+            <ul class="list-disc list-inside text-gray-600 mt-2">
+                <li>API key configuration issues</li>
+                <li>YouTube API quota exceeded</li>
+                <li>Network connectivity problems</li>
+            </ul>
+            <button onclick="location.reload()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300">
+                Retry
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function getSuggestions(videoId, countryCode) {
+            const suggestionsDiv = $(`#suggestions-${videoId}`);
+            const suggestionsContent = suggestionsDiv.find('.suggestions-content');
+            
+            if (suggestionsDiv.is(':visible')) {
+                suggestionsDiv.slideUp();
+                return;
+            }
+
+            suggestionsContent.html('<div class="animate-pulse">Loading suggestions...</div>');
+            suggestionsDiv.slideDown();
+
+            $.get(`/suggestions/${videoId}?country=${countryCode}`)
+                .done(function(response) {
+                    if (response.error) {
+                        suggestionsContent.html(`<div class="text-red-500">${response.error}</div>`);
+                    } else {
+                        suggestionsContent.html(response.suggestions.replace(/\n/g, '<br>'));
+                    }
+                })
+                .fail(function(error) {
+                    let errorMessage = 'Error loading suggestions. Please try again.';
+                    if (error.responseJSON && error.responseJSON.error) {
+                        errorMessage = error.responseJSON.error;
+                    }
+                    suggestionsContent.html(`<div class="text-red-500">${errorMessage}</div>`);
+                });
+        }
+
+        // Chat functionality
+        function toggleChat() {
+            const sidebar = document.getElementById('chatSidebar');
+            const toggleBtn = document.getElementById('chatToggleBtn');
+            
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                toggleBtn.classList.remove('hidden'); // Show button when chat is closed
+            } else {
+                sidebar.classList.add('open');
+                toggleBtn.classList.add('hidden'); // Hide button when chat is open
+            }
+        }
+
+        // Handle chat form submission
+        document.getElementById('chatForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessageToChat('You', message, 'user');
+            input.value = '';
+            
+            // Get current country code
+            const countryCode = document.getElementById('country').value;
+            
+            // Send message to server
+            $.ajax({
+                url: `/chat/${countryCode}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ message: message }),
+                success: function(response) {
+                    addMessageToChat('AI Assistant', response.response, 'ai');
+                },
+                error: function(error) {
+                    addMessageToChat('System', 'Error: Unable to get response. Please try again.', 'error');
+                }
+            });
+        });
+
+        function addMessageToChat(sender, message, type) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `p-3 rounded-lg ${
+                type === 'user' ? 'bg-blue-100 ml-12' :
+                type === 'ai' ? 'bg-green-100 mr-12' :
+                'bg-red-100'
+            }`;
+            
+            const senderSpan = document.createElement('span');
+            senderSpan.className = 'font-semibold text-sm text-gray-600';
+            senderSpan.textContent = `${sender}: `;
+            
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = message;
+            
+            messageDiv.appendChild(senderSpan);
+            messageDiv.appendChild(messageSpan);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
+</body>
+</html> 
