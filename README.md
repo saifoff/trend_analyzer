@@ -21,19 +21,6 @@ This Flask application fetches trending YouTube videos and uses Google's Gemini 
 - YouTube Data API key
 - Google Gemini API key
 
-## API Quota Information
-
-### YouTube API
-- Free daily quota: 10,000 units
-- Key operations cost:
-  - Search API: 100 units per request
-  - Video details: 1 unit per video
-- Quota resets at midnight Pacific Time
-- If you exceed the quota:
-  1. Wait for daily reset
-  2. Request a quota increase from Google
-  3. Create a new project with a new API key
-
 ### Gemini API
 - Requires API key for content generation
 - Used for chat responses and content suggestions
