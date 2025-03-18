@@ -37,6 +37,70 @@
             opacity: 0;
             visibility: hidden;
         }
+
+        /* Theme Toggle Button */
+        #themeToggleBtn {
+            position: fixed;
+            right: 20px;
+            top: 80px;
+            z-index: 1001;
+        }
+
+        /* Dark Mode Styles */
+        .dark-mode {
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+        }
+
+        .dark-mode #chatSidebar {
+            background: #2d2d2d;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.3);
+        }
+
+        .dark-mode .bg-white {
+            background-color: #2d2d2d !important;
+            color: #ffffff !important;
+        }
+
+        .dark-mode .text-gray-800 {
+            color: #ffffff !important;
+        }
+
+        .dark-mode .text-gray-600, 
+        .dark-mode .text-gray-700 {
+            color: #d1d1d1 !important;
+        }
+
+        .dark-mode .border {
+            border-color: #404040 !important;
+        }
+
+        .dark-mode .bg-gray-50 {
+            background-color: #333333 !important;
+        }
+
+        .dark-mode .bg-blue-100 {
+            background-color: #1e3a5f !important;
+        }
+
+        .dark-mode .bg-green-100 {
+            background-color: #1e3c2e !important;
+        }
+
+        .dark-mode .bg-red-100 {
+            background-color: #3c1e1e !important;
+        }
+
+        .dark-mode input,
+        .dark-mode select {
+            background-color: #404040 !important;
+            color: #ffffff !important;
+            border-color: #505050 !important;
+        }
+
+        .dark-mode input::placeholder {
+            color: #a0a0a0 !important;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -46,6 +110,13 @@
             class="bg-green-500 text-white px-6 py-3 rounded-full shadow-lg hover:bg-green-600 transition duration-300 flex items-center gap-2">
         <span id="chatToggleText">Chat</span>
         <span id="chatToggleIcon">💬</span>
+    </button>
+
+    <!-- Theme Toggle Button -->
+    <button id="themeToggleBtn"
+            onclick="toggleTheme()"
+            class="bg-purple-500 text-white px-6 py-3 rounded-full shadow-lg hover:bg-purple-600 transition duration-300 flex items-center gap-2">
+        <span id="themeToggleText">🌙</span>
     </button>
 
     <!-- Chat Sidebar -->
@@ -250,6 +321,29 @@
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+
+        // Add this at the beginning of your script section
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggleText = document.getElementById('themeToggleText');
+            
+            body.classList.toggle('dark-mode');
+            
+            // Update theme icon
+            themeToggleText.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙';
+            
+            // Save theme preference
+            localStorage.setItem('darkMode', body.classList.contains('dark-mode'));
+        }
+
+        // Load saved theme preference
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('themeToggleText').textContent = '☀️';
+            }
+        });
     </script>
 </body>
 </html> 
