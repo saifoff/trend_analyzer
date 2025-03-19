@@ -1,6 +1,6 @@
 # YouTube Trending Videos & Content Suggestions
 
-This Flask-based project provides a dynamic platform to explore trending YouTube videos while leveraging Google's Gemini AI to generate content ideas. With a modern, responsive UI featuring dark mode and an interactive chat interface, users can engage in discussions about video trends across different countries. The integration of AI-powered content suggestions helps creators and marketers develop engaging video ideas based on trending topics. This project is particularly beneficial for content creators looking to optimize their strategy, researchers analyzing video engagement metrics, and social media managers seeking data-driven insights into viral trends.
+This Flask-based project provides a dynamic platform to explore trending YouTube videos while leveraging Google's Gemini AI to generate content ideas. With a modern, responsive UI featuring dark mode and an interactive chat interface, users can engage in discussions about video trends across different countries. The integration of AI-powered content suggestions helps creators and marketers develop engaging video ideas based on trending topics. This project is particularly beneficial for content creators looking to optimize their strategy, researchers analyzing video engagement metrics, and social media managers seeking data-driven insights into viral trends..
 
 ## Features
 
