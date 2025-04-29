@@ -50,26 +50,6 @@ COUNTRIES = {
 # Store chat history (in memory - for demo purposes)
 chat_history = {}
 
-CATEGORY_MAP = {
-    '1': 'Film & Animation',
-    '2': 'Autos & Vehicles',
-    '10': 'Music',
-    '15': 'Pets & Animals',
-    '17': 'Sports',
-    '18': 'Short Movies',
-    '19': 'Travel & Events',
-    '20': 'Gaming',
-    '22': 'People & Blogs',
-    '23': 'Comedy',
-    '24': 'Entertainment',
-    '25': 'News & Politics',
-    '26': 'Howto & Style',
-    '27': 'Education',
-    '28': 'Science & Technology',
-    '29': 'Nonprofits & Activism',
-    # Add more as needed
-}
-
 def calculate_engagement_score(video):
     """Calculate an engagement score based on multiple metrics"""
     try:
@@ -92,7 +72,7 @@ def calculate_engagement_score(video):
     except (KeyError, ValueError, ZeroDivisionError):
         return 0
 
-def get_trending_videos(region_code='US', published_after=None, duration_filter=None, category_filter=None):
+def get_trending_videos(region_code='US'):
     try:
         print(f"Fetching trending videos for region: {region_code}")
         if not youtube_api_key:
@@ -151,29 +131,11 @@ def get_trending_videos(region_code='US', published_after=None, duration_filter=
                 try:
                     view_count = int(item['statistics'].get('viewCount', 0))
                     duration_seconds = parse_duration(item['contentDetails']['duration'])
-                    category_id = item['snippet'].get('categoryId', None)
-                    category_name = CATEGORY_MAP.get(category_id, 'Other')
-                    published_at = item['snippet']['publishedAt']
                     
                     print(f"Video {item['id']}: Views={view_count}, Duration={duration_seconds}s")
                     
                     # Only include videos with significant views and longer than 5 minutes
                     if view_count > 10000 and duration_seconds >= 300:
-                        # Filter by published_after
-                        if published_after:
-                            published_dt = datetime.strptime(published_at, '%Y-%m-%dT%H:%M:%SZ')
-                            if published_dt < published_after:
-                                continue
-                        # Filter by duration
-                        if duration_filter == 'short' and duration_seconds > 240:
-                            continue
-                        if duration_filter == 'medium' and (duration_seconds <= 240 or duration_seconds > 1200):
-                            continue
-                        if duration_filter == 'long' and duration_seconds <= 1200:
-                            continue
-                        # Filter by category
-                        if category_filter and category_id != category_filter:
-                            continue
                         video = {
                             'title': item['snippet']['title'],
                             'description': item['snippet']['description'],
@@ -183,12 +145,10 @@ def get_trending_videos(region_code='US', published_after=None, duration_filter=
                             'comments': item['statistics'].get('commentCount', '0'),
                             'video_id': item['id'],
                             'country': region_code,
-                            'published_at': published_at,
+                            'published_at': item['snippet']['publishedAt'],
                             'duration': duration_seconds,
                             'duration_formatted': str(timedelta(seconds=duration_seconds)).split('.')[0],
-                            'engagement_score': calculate_engagement_score(item),
-                            'category_id': category_id,
-                            'category_name': category_name
+                            'engagement_score': calculate_engagement_score(item)
                         }
                         all_videos.append(video)
                         print(f"Added video: {item['snippet']['title']}")
@@ -359,26 +319,6 @@ def chat(country_code):
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': str(e)}), 500
-
-@app.route('/api/videos')
-def api_videos():
-    country = request.args.get('country', 'US')
-    time_filter = request.args.get('time', None)
-    duration_filter = request.args.get('duration', None)
-    category_filter = request.args.get('category', None)
-    published_after = None
-    if time_filter == '24h':
-        published_after = datetime.utcnow() - timedelta(days=1)
-    elif time_filter == 'week':
-        published_after = datetime.utcnow() - timedelta(days=7)
-    # category_filter should be categoryId as string
-    videos = get_trending_videos(
-        region_code=country,
-        published_after=published_after,
-        duration_filter=duration_filter,
-        category_filter=category_filter if category_filter else None
-    )
-    return jsonify({'videos': videos, 'categories': CATEGORY_MAP})
 
 if __name__ == '__main__':
     app.run(debug=True) 
